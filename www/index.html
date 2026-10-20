@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DEVICE INTELLIGENCE TERMINAL</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:18px;background:#020604;color:#00ff88;font-family:monospace}
+h2{text-align:center;color:#ff3030;text-shadow:0 0 12px red}
+.panel{border:1px solid #087943;background:#06110a;padding:14px;margin:13px 0;overflow-wrap:anywhere}
+.heading{color:#ff4040;margin-bottom:12px}
+.item{padding:8px 0;border-bottom:1px solid #123320}
+.value{color:#eee}
+button{width:100%;padding:13px;background:#092819;color:#00ff88;border:1px solid #00ff88;font:bold 15px monospace;margin:7px 0}
+small{color:#91a99a}
+</style>
+</head>
+<body>
+<h2>⚠ DEVICE INTELLIGENCE</h2>
+<div class="panel">
+ <div class="heading">SYSTEM STATUS: <span id="status">READY</span></div>
+ <div class="item">DEVICE: <span class="value" id="device">Checking...</span></div>
+ <div class="item">PLATFORM: <span class="value" id="platform">Checking...</span></div>
+ <div class="item">BROWSER: <span class="value" id="browser">Checking...</span></div>
+ <div class="item">LANGUAGE: <span class="value" id="lang"></span></div>
+ <div class="item">SCREEN: <span class="value" id="screen"></span></div>
+ <div class="item">WINDOW: <span class="value" id="windowSize"></span></div>
+ <div class="item">CORES REPORTED: <span class="value" id="cores"></span></div>
+ <div class="item">MEMORY ESTIMATE: <span class="value" id="memory"></span></div>
+ <div class="item">BATTERY: <span class="value" id="battery">Checking support...</span></div>
+</div>
+
+<div class="panel">
+ <div class="heading">NETWORK INFORMATION</div>
+ <div class="item">CONNECTION TYPE: <span class="value" id="connection"></span></div>
+ <div class="item">ONLINE STATUS: <span class="value" id="online"></span></div>
+ <small>No public IP lookup or external data transmission is performed.</small>
+</div>
+
+<div class="panel">
+ <div class="heading">LOCATION ACCESS</div>
+ <div id="location">Location not requested.</div>
+ <button id="locate">REQUEST LOCATION PERMISSION</button>
+</div>
+
+<div class="panel">
+ <div class="heading">LOCAL TERMINAL LOG</div>
+ <div id="logs"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const ua=navigator.userAgent;
+$('device').textContent=/Android/i.test(ua)?'Android device':/iPhone|iPad/i.test(ua)?'Apple mobile device':'Device type not identified';
+$('platform').textContent=navigator.userAgentData?.platform||navigator.platform||'Unavailable';
+$('browser').textContent=/Edg\//.test(ua)?'Microsoft Edge':/Firefox\//.test(ua)?'Firefox':/Chrome\//.test(ua)?'Chrome or Chromium browser':/Safari\//.test(ua)?'Safari':'Browser not identified';
+$('lang').textContent=navigator.language||'Unavailable';
+$('screen').textContent=screen.width+' × '+screen.height+' px';
+$('windowSize').textContent=innerWidth+' × '+innerHeight+' px';
+$('cores').textContent=navigator.hardwareConcurrency||'Not disclosed';
+$('memory').textContent=navigator.deviceMemory?navigator.deviceMemory+' GB (approximate)':'Not disclosed';
+$('online').textContent=navigator.onLine?'ONLINE':'OFFLINE';
+const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+$('connection').textContent=c?(c.effectiveType||c.type||'Limited information'):'Not supported';
+function log(s){
+ const d=document.createElement('div');
+ d.className='item';d.textContent='> '+s;$('logs').prepend(d);
+ while($('logs').children.length>8)$('logs').lastChild.remove();
+}
+log('Device information loaded locally.');
+log('No data has been uploaded.');
+addEventListener('resize',()=>{
+ $('windowSize').textContent=innerWidth+' × '+innerHeight+' px';
+});
+if(navigator.getBattery){
+ navigator.getBattery().then(b=>{
+  function update(){
+   $('battery').textContent=Math.round(b.level*100)+'%'+(b.charging?' (charging)':'');
+  }
+  update();b.addEventListener('levelchange',update);b.addEventListener('chargingchange',update);
+ }).catch(()=>$('battery').textContent='Unavailable');
+}else $('battery').textContent='Browser does not support this feature';
+
+$('locate').onclick=()=>{
+ if(!navigator.geolocation){
+  $('location').textContent='Geolocation not supported by this browser.';
+  return;
+ }
+ $('location').textContent='Waiting for permission...';
+ navigator.geolocation.getCurrentPosition(pos=>{
+  $('location').textContent='Latitude: '+pos.coords.latitude.toFixed(5)+' | Longitude: '+pos.coords.longitude.toFixed(5)+' | Accuracy: about '+Math.round(pos.coords.accuracy)+' m';
+  log('Location permission granted by user.');
+ },err=>{
+  $('location').textContent=err.code===1?'Permission denied.':'Location unavailable or timed out.';
+ },{enableHighAccuracy:false,timeout:12000});
+};
+$('status').textContent='LOCAL SCAN COMPLETE';
+</script>
+</body>
+</html>
