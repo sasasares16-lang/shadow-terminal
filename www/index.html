@@ -97,5 +97,36 @@ $('locate').onclick=()=>{
 };
 $('status').textContent='LOCAL SCAN COMPLETE';
 </script>
+
+<script>
+(function () {
+  let played = false;
+  function scaryVoice() {
+    if (played) return;
+    played = true;
+    if (!window.speechSynthesis) return;
+
+    function speak(text, pitch, rate) {
+      return new Promise(resolve => {
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'en-US';
+        msg.pitch = pitch;
+        msg.rate = rate;
+        msg.volume = 1;
+        msg.onend = resolve;
+        msg.onerror = resolve;
+        speechSynthesis.speak(msg);
+      });
+    }
+
+    speak('Nega, you got hacked!', 0.65, 0.85)
+      .then(() => new Promise(resolve => setTimeout(resolve, 500)))
+      .then(() => speak('Hahahahahaha!', 0.5, 0.8));
+  }
+
+  document.addEventListener('click', scaryVoice, { once: true });
+})();
+</script>
+
 </body>
 </html>
